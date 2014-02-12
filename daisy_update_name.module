@@ -1,0 +1,51 @@
+<?php
+
+/**
+ * Implements hook_user_login
+ */
+function daisy_update_name_user_login(&$edit, $account) {
+	$ch       = curl_init();
+	$username = variable_get('daisy_update_name_username', '');
+	$password = variable_get('daisy_update_name_password', '');
+	$apiurl   = variable_get('daisy_update_name_apiurl', '');
+	$resource = 'rest/person/username/';
+
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch, CURLOPT_USERPWD, $username.':'.$password);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
+	curl_setopt($ch, CURLOPT_URL, $apiurl.$resource.$account->name);
+	$contents = curl_exec($ch);
+	$headers  = curl_getinfo($ch);
+	curl_close($ch);
+
+	if ($headers['http_code'] == 200) {
+	    if (isset($contents)) {
+	        $parsedcontent = json_decode($contents);
+	        if (isset($parsedcontent->id) && is_int($parsedcontent->id)) {
+	            $edit = array(
+	            	'field_firstname' => array(LANGUAGE_NONE => array(array('value' => $parsedcontent->firstName))),
+	            	// This becomes $account->field_custom_first_name[LANGUAGE_NONE][0]['value']
+  					'field_lastname' => array(LANGUAGE_NONE => array(array('value' => $parsedcontent->lastName)))
+  				);
+  				user_save($account, $edit);
+	        }
+	    }
+	}
+
+}
+
+function daisy_update_name_menu() {
+  $items = array();
+  $items['admin/config/people/daisy_update_name'] = array(
+    'title' 			=> 'Daisy API',
+    'description' 		=> 'You need to enter login and password for accessing user information through Daisy API',
+    'page callback' 	=> 'drupal_get_form',
+    'page arguments' 	=> array('daisy_update_name_settings'),
+    'access arguments' 	=> array('access administration pages'),
+    'file' 				=> 'daisy_update_name.admin.inc',
+    'type' 				=> MENU_NORMAL_ITEM,
+   );
+  return $items;
+}
+
+?>

@@ -1,0 +1,9 @@
+name = Daisy Update Name
+description = Fetches firstname and lastname from Daisy when users log in.
+package = Shibboleth
+files[] = daisy_update_name.module
+files[] = daisy_update_name.admin.inc
+dependencies[] = shib_auth
+version = "7.x-0.9"
+core = "7.x"
+datestamp = "1392108587"
